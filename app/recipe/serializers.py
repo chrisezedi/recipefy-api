@@ -12,7 +12,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     """Create Recipe"""
 
     def create(self, validated_data):
-        print(validated_data)
         recipe = Recipe.objects.create(**validated_data)
         return recipe
 
