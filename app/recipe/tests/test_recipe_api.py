@@ -11,90 +11,42 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import (
-    Recipe,
-)
+# from core.models import (
+#     Recipe,
+# )
 
-from recipe.serializers import (
-    RecipeSerializer
-)
+# from recipe.serializers import (
+#     RecipeSerializer
+# )
 
-
-RECIPES_URL = reverse('recipe:recipe-list')
-
-
-def detail_url(recipe_id):
-    """Create and return a recipe detail URL."""
-    return reverse('recipe:recipe-detail', args=[recipe_id])
+RECIPE_URL = reverse('recipe:recipe-list')
 
 
-def image_upload_url(recipe_id):
-    """Create and return an image upload URL."""
-    return reverse('recipe:recipe-upload-image', args=[recipe_id])
-
-
-def create_recipe(user, **params):
-    """Create and return a sample recipe."""
-    defaults = {
-        'name': 'Sample recipe title',
-        'time_minutes': 22,
-        'price': Decimal('5.25'),
-        'description': 'Sample description',
-        'link': 'http://example.com/recipe.pdf',
-    }
-    defaults.update(params)
-
-    recipe = Recipe.objects.create(user=user, **defaults)
-    return recipe
-
-
-def create_user(**params):
-    """Create and return a new user."""
-    return get_user_model().objects.create_user(**params)
-
-
-class PublicRecipeAPITests(TestCase):
-    """Test unauthenticated API requests."""
+class privateRecipeApiTests(TestCase):
+    """create recipe test"""
+    """
+    Possible test cases
+     - create recipe success
+     - test invalid data
+     - test price is decimal
+    """
 
     def setUp(self):
+        user = get_user_model().objects.create(
+            email='user@example.com', password='testpassword')
         self.client = APIClient()
-
-    def test_auth_required(self):
-        """Test auth is required to call API."""
-        res = self.client.get(RECIPES_URL)
-
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-
-
-class PrivateRecipeApiTests(TestCase):
-    """Test authenticated API requests."""
-
-    def setUp(self):
-        self.client = APIClient()
-        self.user = create_user(email='user@example.com', password='test123')
+        self.user = user
         self.client.force_authenticate(self.user)
 
-    def test_retrieve_recipes(self):
-        """Test retrieving a list of recipes."""
-        create_recipe(user=self.user)
-        create_recipe(user=self.user)
+    def test_create_recipe(self):
+        payload = {
+            'name': 'recipe1',
+            'description': 'recipe1 desc',
+            'time_minutes': 30,
+            'price': Decimal(300),
+            'link': 'recipe1.com'
+        }
 
-        res = self.client.get(RECIPES_URL)
-
-        recipes = Recipe.objects.all().order_by('-id')
-        serializer = RecipeSerializer(recipes, many=True)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
-
-    def test_recipe_list_limited_to_user(self):
-        """Test list of recipes is limited to authenticated user."""
-        other_user = create_user(email='other@example.com', password='test123')
-        create_recipe(user=other_user)
-        create_recipe(user=self.user)
-
-        res = self.client.get(RECIPES_URL)
-
-        recipes = Recipe.objects.filter(user=self.user)
-        serializer = RecipeSerializer(recipes, many=True)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
+        res = self.client.post(RECIPE_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['name'], payload['name'])
