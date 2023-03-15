@@ -16,7 +16,8 @@ from core.models import (
 )
 
 from recipe.serializers import (
-    RecipeSerializer
+    RecipeSerializer,
+    RecipeDetailSerializer
 )
 
 RECIPE_URL = reverse('recipe:recipe-list')
@@ -44,6 +45,10 @@ def create_user(**params):
 
     defaults.update(params)
     return get_user_model().objects.create(**params)
+
+
+def detail_url(id):
+    return reverse('recipe:recipe-detail', args=[id])
 
 
 class privateRecipeApiTests(TestCase):
@@ -91,4 +96,15 @@ class privateRecipeApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 1)
         self.assertEqual(len(serializer.data), 1)
+        self.assertEqual(res.data, serializer.data)
+
+    def test_get_recipe(self):
+        recipe = create_recipe(user=self.user)
+        url = detail_url(recipe.id)
+
+        res = self.client.get(url)
+
+        serializer = RecipeDetailSerializer(recipe)
+
+        self.assertEqual(recipe.description, res.data['description'])
         self.assertEqual(res.data, serializer.data)
