@@ -72,8 +72,12 @@ class privateRecipeApiTests(TestCase):
         }
 
         res = self.client.post(RECIPE_URL, payload)
+
+        recipe = Recipe.objects.get(id=res.data['id'])
+
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(res.data['name'], payload['name'])
+        for key, value in payload.items():
+            self.assertEqual(getattr(recipe, key), value)
 
     def test_list_all_recipes(self):
         """retrieve all recipes"""
